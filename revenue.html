@@ -1,0 +1,540 @@
+<html lang="en" class="dark"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue - VendingPreneurs</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    fontSize: {
+                        xs: ['0.75rem', { lineHeight: '1rem' }],
+                        sm: ['0.875rem', { lineHeight: '1.25rem' }],
+                        base: ['1rem', { lineHeight: '1.5rem' }],
+                        lg: ['1.125rem', { lineHeight: '1.75rem' }],
+                        xl: ['1.25rem', { lineHeight: '1.75rem' }],
+                        '2xl': ['1.5rem', { lineHeight: '2rem' }],
+                        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
+                        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
+                    },
+                    colors: {
+                        border: 'rgba(255, 255, 255, 0.08)',
+                        background: '#09090b', // zinc-950
+                        surface: '#18181b', // zinc-900
+                        surfaceHighlight: '#27272a', // zinc-800
+                        primary: '#6366f1', // indigo-500
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(5px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b;
+        }
+
+        /* Border Gradient Utility */
+        .border-gradient-top {
+            position: relative;
+        }
+        .border-gradient-top::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        }
+        
+        /* Subtle glow for charts */
+        .chart-glow-indigo { filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.2)); }
+        .chart-glow-purple { filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.2)); }
+    </style>
+</head>
+<body class="bg-background text-zinc-400 font-sans antialiased selection:bg-indigo-500/20 selection:text-indigo-200 h-screen overflow-hidden flex bg-grid">
+
+    <!-- Sidebar -->
+    <aside class="w-64 border-r border-border bg-background/50 backdrop-blur-xl flex flex-col hidden md:flex">
+        <div class="h-14 flex items-center px-6 border-b border-border">
+            <div class="flex items-center gap-2 text-zinc-100 font-medium tracking-tight">
+                <div class="w-6 h-6 rounded bg-gradient-to-tr from-zinc-200 to-zinc-500 flex items-center justify-center text-black text-xs font-bold">V</div>
+                VendingPreneurs
+            </div>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto pt-6 pr-3 pb-6 pl-3 space-y-1">
+            <div class="uppercase text-xs font-medium text-zinc-500 tracking-wider mb-2 pr-3 pl-3">Platform</div>
+
+            <!-- Dashboard -->
+            <a href="/index.html" class="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-surfaceHighlight/30 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="layout-dashboard" class="lucide lucide-layout-dashboard w-4 h-4"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
+                Dashboard
+            </a>
+
+            <!-- Course Analytics -->
+            <a href="/analytics.html" class="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-surfaceHighlight/30 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="bar-chart-2" class="lucide lucide-bar-chart-2 w-4 h-4"><path d="M5 21v-6"></path><path d="M12 21V3"></path><path d="M19 21V9"></path></svg>
+                Course Analytics
+            </a>
+
+            <!-- Learners -->
+            <a href="/learners.html" class="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-surfaceHighlight/30 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="users" class="lucide lucide-users w-4 h-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                Learners
+            </a>
+
+            <!-- Courses -->
+            <a href="/courses.html" class="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-surfaceHighlight/30 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="book-open" class="lucide lucide-book-open w-4 h-4"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg>
+                Courses
+            </a>
+
+            <div class="px-3 mt-6 mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">Sales</div>
+            
+            <!-- Warm Leads -->
+            <a href="/warm-leads.html" class="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-surfaceHighlight/30 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.5-4.136 0-5.5.5-1.5 1-3 3-3.5 1 3.076 1.5 4.5 3 6.5 1.332 1.85 2.5 3.328 2.5 5 0 3.31-2.69 6-6 6a6 6 0 0 1-6-6c0-1 .5-2 1-3"></path><path d="M12 22v-2"></path></svg>
+                Warm Leads
+            </a>
+
+            <!-- Converted -->
+            <a href="/converted.html" class="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-surfaceHighlight/30 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                Converted
+                <span id="converted-badge" class="ml-auto text-xs bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded-full border border-emerald-500/20">—</span>
+            </a>
+
+            <!-- Revenue (Active) -->
+            <a href="/revenue.html" class="flex items-center gap-3 text-sm text-zinc-100 bg-surfaceHighlight/50 rounded-lg border border-border/50 px-3 py-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="banknote" class="lucide lucide-banknote w-4 h-4"><rect width="20" height="12" x="2" y="6" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg>
+                Revenue
+            </a>
+
+            <a href="/bookings.html" class="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-surfaceHighlight/30 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="phone-call" class="lucide lucide-phone-call w-4 h-4"><path d="M13 2a9 9 0 0 1 9 9"></path><path d="M13 6a5 5 0 0 1 5 5"></path><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>
+                Bookings
+                <span id="bookings-badge" class="ml-auto text-xs bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-full border border-indigo-500/20">—</span>
+            </a>
+
+            <div class="px-3 mt-6 mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">System</div>
+            <a href="/settings.html" class="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-surfaceHighlight/30 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                Settings
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-border">
+            <div class="flex items-center gap-3 w-full p-2 rounded-lg">
+                <div id="user-avatar" class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-300 text-xs font-medium">
+                    AD
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-zinc-200 truncate">Admin</div>
+                    <div id="user-email" class="text-xs text-zinc-500 truncate">Loading...</div>
+                </div>
+                <button id="logout-btn" class="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="Sign out">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Header -->
+        <header class="h-14 border-b border-border bg-background/50 backdrop-blur-sm flex items-center justify-between px-6 z-10">
+            <div class="flex items-center gap-4">
+                <button class="md:hidden text-zinc-400 hover:text-zinc-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="menu" class="lucide lucide-menu w-5 h-5"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg>
+                </button>
+                <nav class="flex items-center gap-2 text-sm text-zinc-500">
+                    <span class="hover:text-zinc-300 cursor-pointer">Sales</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="chevron-right" class="lucide lucide-chevron-right w-3 h-3"><path d="m9 18 6-6-6-6"></path></svg>
+                    <span class="text-zinc-100 font-medium">Revenue</span>
+                </nav>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="export-revenue-btn" class="px-3 py-1.5 text-sm font-medium text-black bg-zinc-100 rounded hover:bg-white transition-colors shadow-sm shadow-zinc-900/20 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Export Report
+                </button>
+            </div>
+        </header>
+
+        <!-- Revenue Content -->
+        <div class="flex-1 overflow-y-auto scroll-smooth p-6">
+            <div class="max-w-7xl mx-auto space-y-6">
+                
+                <!-- KPI Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <!-- Total Revenue -->
+                    <div class="bg-surface/40 border border-border rounded-xl p-5 group/card hover:bg-surface/60 transition-colors">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-medium text-zinc-500 uppercase tracking-wider">Total Course Revenue</span>
+                                <div class="relative group/tooltip">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600 hover:text-zinc-400 cursor-help transition-colors"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                    <div class="fixed w-56 p-3 rounded-lg shadow-2xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200 text-left normal-case tracking-normal pointer-events-none" style="z-index: 9999; background-color: #18181b; border: 1px solid #3f3f46;">
+                                        <div class="text-xs font-medium text-zinc-200 mb-1">How it's calculated</div>
+                                        <div class="text-[11px] text-zinc-400 leading-relaxed">Lifetime revenue generated from all frontend course sales.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="dollar-sign" class="lucide lucide-dollar-sign w-4 h-4 text-zinc-500"><line x1="12" x2="12" y1="2" y2="22"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <h2 id="kpi-total-revenue" class="text-3xl font-semibold text-zinc-100 tracking-tight">$0</h2>
+                        </div>
+                        <div class="mt-2 text-xs text-zinc-500">All-time earnings</div>
+                    </div>
+
+                    <!-- Monthly Revenue -->
+                    <div class="bg-surface/40 border border-border rounded-xl p-5 group/card hover:bg-surface/60 transition-colors">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs font-medium text-zinc-500 uppercase tracking-wider">Monthly Course Rev</span>
+                                <div class="relative group/tooltip">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600 hover:text-zinc-400 cursor-help transition-colors"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                    <div class="fixed w-56 p-3 rounded-lg shadow-2xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200 text-left normal-case tracking-normal pointer-events-none" style="z-index: 9999; background-color: #18181b; border: 1px solid #3f3f46;">
+                                        <div class="text-xs font-medium text-zinc-200 mb-1">How it's calculated</div>
+                                        <div class="text-[11px] text-zinc-400 leading-relaxed">Revenue from course sales in the current calendar month.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="kpi-this-month-growth" class="text-xs bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trending-up" class="lucide lucide-trending-up w-3 h-3"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+                                0%
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <h2 id="kpi-this-month" class="text-3xl font-semibold text-zinc-100 tracking-tight">$0</h2>
+                        </div>
+                        <div id="kpi-this-month-prev" class="mt-2 text-xs text-zinc-500">vs. last month ($0)</div>
+                    </div>
+
+                    <!-- AOV -->
+                    <div class="bg-surface/40 border border-border rounded-xl p-5 group/card hover:bg-surface/60 transition-colors">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-medium text-zinc-500 uppercase tracking-wider">Avg. Course Order Value</span>
+                                <div class="relative group/tooltip">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600 hover:text-zinc-400 cursor-help transition-colors"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                    <div class="fixed w-56 p-3 rounded-lg shadow-2xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200 text-left normal-case tracking-normal pointer-events-none" style="z-index: 9999; background-color: #18181b; border: 1px solid #3f3f46;">
+                                        <div class="text-xs font-medium text-zinc-200 mb-1">How it's calculated</div>
+                                        <div class="text-[11px] text-zinc-400 leading-relaxed">Total Course Revenue divided by the total number of course purchases.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="shopping-cart" class="lucide lucide-shopping-cart w-4 h-4 text-zinc-500"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <h2 id="kpi-aov" class="text-3xl font-semibold text-zinc-100 tracking-tight">$0</h2>
+                        </div>
+                        <div id="kpi-aov-sub" class="mt-2 text-xs text-zinc-500">Per user</div>
+                    </div>
+
+                    <!-- ARPU -->
+                    <div class="bg-surface/40 border border-border rounded-xl p-5 group/card hover:bg-surface/60 transition-colors">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-medium text-zinc-500 uppercase tracking-wider">Course Rev / Active User</span>
+                                <div class="relative group/tooltip">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600 hover:text-zinc-400 cursor-help transition-colors"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                    <div class="fixed w-56 p-3 rounded-lg shadow-2xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200 text-left normal-case tracking-normal pointer-events-none" style="z-index: 9999; background-color: #18181b; border: 1px solid #3f3f46;">
+                                        <div class="text-xs font-medium text-zinc-200 mb-1">How it's calculated</div>
+                                        <div class="text-[11px] text-zinc-400 leading-relaxed">Total Course Revenue divided by the number of active users (30d).</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="users" class="lucide lucide-users w-4 h-4 text-zinc-500"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <h2 id="kpi-arpu" class="text-3xl font-semibold text-zinc-100 tracking-tight">$0</h2>
+                        </div>
+                        <div id="kpi-arpu-sub" class="mt-2 text-xs text-zinc-500">Across 0 active users</div>
+                    </div>
+                </div>
+
+                <!-- Backend Revenue Section -->
+                <div class="bg-gradient-to-r from-amber-500/5 via-surface/40 to-surface/40 border border-amber-500/20 rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-amber-500/10 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-zinc-100">Backend Revenue (High-Ticket)</h3>
+                                <p class="text-xs text-zinc-500">Revenue from premium upsells and coaching programs</p>
+                            </div>
+                        </div>
+                        <div id="backend-conversion-badge" class="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg relative group cursor-help">
+                            <span class="text-xs text-amber-400 font-medium flex items-center gap-1.5">
+                                0% Conversion Rate
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500/50"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                            </span>
+                            <div class="absolute right-0 top-10 w-64 p-3 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-left">
+                                <div class="text-xs font-medium text-zinc-200 mb-1">How it's calculated</div>
+                                <div class="text-[11px] text-zinc-400 leading-relaxed mb-2">Converted Customers ÷ Frontend Customers × 100</div>
+                                <div class="text-[11px] text-zinc-500 border-t border-zinc-800 pt-2">
+                                    <span class="text-zinc-300">Converted</span> = bought frontend + backend<br>
+                                    <span class="text-zinc-300">Frontend</span> = bought any frontend course
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <!-- Backend Revenue -->
+                        <div class="bg-surface/60 border border-border rounded-lg p-4 relative group">
+                            <div class="flex items-center gap-1.5 text-xs text-zinc-500 uppercase tracking-wider mb-1">
+                                Backend Revenue
+                                <div class="relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600 hover:text-zinc-400 cursor-help transition-colors"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                    <div class="absolute left-0 top-5 w-56 p-3 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-left normal-case tracking-normal">
+                                        <div class="text-xs font-medium text-zinc-200 mb-1">How it's calculated</div>
+                                        <div class="text-[11px] text-zinc-400 leading-relaxed">Sum of all high-ticket product sales from customers who also purchased a frontend course.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="backend-total-revenue" class="text-2xl font-bold text-amber-400">$0</div>
+                            <div id="backend-sales-count" class="text-xs text-zinc-500 mt-1">0 sales</div>
+                        </div>
+                        
+                        <!-- Unique Customers -->
+                        <div class="bg-surface/60 border border-border rounded-lg p-4 relative group">
+                            <div class="flex items-center gap-1.5 text-xs text-zinc-500 uppercase tracking-wider mb-1">
+                                Unique Customers
+                                <div class="relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600 hover:text-zinc-400 cursor-help transition-colors"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                    <div class="absolute left-0 top-5 w-56 p-3 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-left normal-case tracking-normal">
+                                        <div class="text-xs font-medium text-zinc-200 mb-1">How it's calculated</div>
+                                        <div class="text-[11px] text-zinc-400 leading-relaxed">Count of unique customers who purchased at least one high-ticket backend product.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="backend-customers-count" class="text-2xl font-bold text-zinc-100">0</div>
+                            <div class="text-xs text-zinc-500 mt-1">bought high-ticket</div>
+                        </div>
+                        
+                        <!-- Average Backend Order -->
+                        <div class="bg-surface/60 border border-border rounded-lg p-4 relative group">
+                            <div class="flex items-center gap-1.5 text-xs text-zinc-500 uppercase tracking-wider mb-1">
+                                Avg. Backend Order
+                                <div class="relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600 hover:text-zinc-400 cursor-help transition-colors"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                    <div class="absolute left-0 top-5 w-56 p-3 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-left normal-case tracking-normal">
+                                        <div class="text-xs font-medium text-zinc-200 mb-1">How it's calculated</div>
+                                        <div class="text-[11px] text-zinc-400 leading-relaxed">Backend Revenue ÷ Total Backend Sales = Average price per high-ticket purchase.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="backend-avg-order" class="text-2xl font-bold text-zinc-100">$0</div>
+                            <div class="text-xs text-zinc-500 mt-1">Per high-ticket sale</div>
+                        </div>
+                        
+                        <!-- Revenue Share -->
+                        <div class="bg-surface/60 border border-border rounded-lg p-4 relative group">
+                            <div class="flex items-center gap-1.5 text-xs text-zinc-500 uppercase tracking-wider mb-1">
+                                Revenue Share
+                                <div class="relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600 hover:text-zinc-400 cursor-help transition-colors"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                    <div class="absolute right-0 top-5 w-56 p-3 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-left normal-case tracking-normal">
+                                        <div class="text-xs font-medium text-zinc-200 mb-1">How it's calculated</div>
+                                        <div class="text-[11px] text-zinc-400 leading-relaxed">Backend Revenue ÷ (Frontend Revenue + Backend Revenue) × 100 = Percentage of total revenue from high-ticket sales.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="backend-revenue-share" class="text-2xl font-bold text-zinc-100">0%</div>
+                            <div class="text-xs text-zinc-500 mt-1">of total revenue</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Backend Products Table -->
+                    <div class="mt-4 bg-surface/40 rounded-lg border border-border overflow-hidden">
+                        <table class="w-full text-left text-xs">
+                            <thead class="text-[10px] text-zinc-500 font-medium uppercase tracking-wider bg-surface/60">
+                                <tr>
+                                    <th class="px-4 py-3 font-medium">Product Name</th>
+                                    <th class="px-4 py-3 font-medium text-right">Revenue</th>
+                                    <th class="px-4 py-3 font-medium text-right">Sales</th>
+                                    <th class="px-4 py-3 font-medium text-right">Avg. Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="backend-products-tbody" class="divide-y divide-border/50">
+                                <tr>
+                                    <td colspan="4" class="px-4 py-6 text-center text-zinc-500">Loading backend products...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Section 2: Revenue Chart -->
+                <div class="bg-surface/40 border border-border rounded-xl p-6">
+                    <div class="mb-2">
+                        <h3 class="text-base font-medium text-zinc-100">Frontend Revenue Over Time</h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Revenue by course (Last 6 months)</p>
+                    </div>
+                    <div id="chart-container" class="h-[280px] w-full">
+                        <div class="h-full w-full flex items-center justify-center text-zinc-600 text-sm">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Section 3 & 4: Breakdown and Trends -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Revenue by Course (Breakdown) -->
+                    <div class="lg:col-span-2 bg-surface/40 border border-border rounded-xl p-0 overflow-hidden flex flex-col">
+                        <div class="px-5 py-4 border-b border-border bg-surfaceHighlight/10 flex justify-between items-center">
+                            <h3 class="text-sm font-medium text-zinc-200">Revenue by Course</h3>
+                            <button class="text-xs text-zinc-500 hover:text-zinc-300">View All</button>
+                        </div>
+                        <div class="flex-1">
+                            <table class="w-full text-left text-xs">
+                                <thead class="text-[10px] text-zinc-500 font-medium uppercase tracking-wider bg-surfaceHighlight/5">
+                                    <tr>
+                                        <th class="px-5 py-3 font-medium">Course Name</th>
+                                        <th class="px-5 py-3 font-medium w-1/3">Contribution</th>
+                                        <th class="px-5 py-3 font-medium text-right">Revenue</th>
+                                        <th class="px-5 py-3 font-medium text-right">Users</th>
+                                        <th class="px-5 py-3 font-medium text-right hidden sm:table-cell">Rev/User</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="course-table-body" class="divide-y divide-border/50">
+                                    <tr>
+                                        <td colspan="5" class="px-5 py-8 text-center text-zinc-500 text-xs">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Insights Grid -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Best Month -->
+                        <div class="bg-surface/40 border border-border rounded-xl p-4 flex flex-col justify-center">
+                            <div class="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="calendar" class="lucide lucide-calendar w-4 h-4 text-zinc-400"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
+                            </div>
+                            <div class="text-[10px] uppercase text-zinc-500 font-medium tracking-wide">Best Month</div>
+                            <div id="insight-best-month-name" class="text-lg font-semibold text-zinc-100 mt-1">-</div>
+                            <div id="insight-best-month-value" class="text-xs text-emerald-400 font-medium">$0</div>
+                        </div>
+
+                        <!-- Growth -->
+                        <div class="bg-surface/40 border border-border rounded-xl p-4 flex flex-col justify-center">
+                            <div class="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="bar-chart-2" class="lucide lucide-bar-chart-2 w-4 h-4 text-zinc-400"><path d="M5 21v-6"></path><path d="M12 21V3"></path><path d="M19 21V9"></path></svg>
+                            </div>
+                            <div class="text-[10px] uppercase text-zinc-500 font-medium tracking-wide">MoM Growth</div>
+                            <div id="insight-mom-growth" class="text-lg font-semibold text-zinc-100 mt-1">0%</div>
+                            <div class="text-xs text-zinc-500">Month over month</div>
+                        </div>
+
+                        <!-- Best Product -->
+                        <div class="col-span-2 bg-surface/40 border border-border rounded-xl p-4 relative overflow-hidden">
+                            <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl -mr-8 -mt-8"></div>
+                            <div class="relative z-10">
+                                <div class="text-[10px] uppercase text-zinc-500 font-medium tracking-wide mb-2">Top Performer</div>
+                                <div id="insight-top-course-name" class="font-medium text-zinc-100 mb-1">-</div>
+                                <div id="insight-top-course-stats" class="flex items-center gap-3 text-xs">
+                                    <span class="text-zinc-500">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 5: Recent Transactions -->
+                <div class="bg-surface/40 border border-border rounded-xl p-0 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-border bg-surfaceHighlight/10 flex justify-between items-center">
+                        <h3 class="text-sm font-medium text-zinc-200">Recent Transactions</h3>
+                        <div class="flex gap-2">
+                            <button id="transactions-prev" class="w-7 h-7 flex items-center justify-center rounded border border-border bg-surface hover:bg-surfaceHighlight text-zinc-400 transition-colors cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="chevron-left" class="lucide lucide-chevron-left w-3 h-3"><path d="m15 18-6-6 6-6"></path></svg>
+                            </button>
+                            <button id="transactions-next" class="w-7 h-7 flex items-center justify-center rounded border border-border bg-surface hover:bg-surfaceHighlight text-zinc-400 transition-colors cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="chevron-right" class="lucide lucide-chevron-right w-3 h-3"><path d="m9 18 6-6-6-6"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs whitespace-nowrap">
+                            <thead class="text-[10px] text-zinc-500 font-medium uppercase tracking-wider bg-surfaceHighlight/5">
+                                <tr>
+                                    <th class="px-5 py-3 font-medium w-12"></th>
+                                    <th class="px-5 py-3 font-medium">Customer</th>
+                                    <th class="px-5 py-3 font-medium">Course / Product</th>
+                                    <th class="px-5 py-3 font-medium">Date</th>
+                                    <th class="px-5 py-3 font-medium text-right">Amount</th>
+                                    <th class="px-5 py-3 font-medium text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-tbody" class="divide-y divide-border/50">
+                                <tr>
+                                    <td colspan="6" class="px-5 py-8 text-center text-zinc-500 text-xs">Loading transactions...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+    <script type="module" src="/src/auth-guard.js"></script>
+    <script type="module" src="/src/revenue.js"></script>
+    <script type="module" src="/src/sidebar.js"></script>
+</body></html>
