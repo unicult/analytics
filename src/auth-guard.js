@@ -32,7 +32,7 @@ function clearSession() {
 // Logout function
 function logout() {
   clearSession()
-  window.location.href = '/login.html'
+  window.location.href = '/vendingpreneurs/login.html'
 }
 
 // Get current user
@@ -47,7 +47,7 @@ function checkAuthAndRedirect() {
   
   if (!session) {
     // Not authenticated, redirect to login
-    window.location.href = '/login.html'
+    window.location.href = '/vendingpreneurs/login.html'
     return null
   }
   

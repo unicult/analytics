@@ -33,7 +33,7 @@ function getSession() {
 // Logout
 function logout() {
   localStorage.removeItem(SESSION_KEY)
-  window.location.href = '/login.html'
+  window.location.href = '/vendingpreneurs/login.html'
 }
 
 // State

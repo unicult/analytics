@@ -71,7 +71,7 @@ export function isAuthenticated() {
 // ============================================
 export function logout() {
   clearSession()
-  window.location.href = '/login.html'
+  window.location.href = '/vendingpreneurs/login.html'
 }
 
 // ============================================
@@ -102,7 +102,7 @@ if (isLoginPage) {
     
     // Check if already logged in
     if (isAuthenticated()) {
-      window.location.href = '/index.html'
+      window.location.href = '/vendingpreneurs/index.html'
       return
     }
     
@@ -183,7 +183,7 @@ if (isLoginPage) {
         showSuccess('Login successful! Redirecting...')
         
         setTimeout(() => {
-          window.location.href = '/index.html'
+          window.location.href = '/vendingpreneurs/index.html'
         }, 800)
         
       } catch (error) {
