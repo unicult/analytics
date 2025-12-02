@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    {
+      "source": "/vendingpreneurs",
+      "destination": "/vendingpreneurs/index.html"
+    },
+    {
+      "source": "/vendingpreneurs/",
+      "destination": "/vendingpreneurs/index.html"
+    }
+  ]
+}
+
