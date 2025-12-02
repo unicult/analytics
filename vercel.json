@@ -1,13 +1,17 @@
 {
   "rewrites": [
-    {
-      "source": "/vendingpreneurs",
-      "destination": "/vendingpreneurs/index.html"
-    },
-    {
-      "source": "/vendingpreneurs/",
-      "destination": "/vendingpreneurs/index.html"
-    }
+    { "source": "/vendingpreneurs", "destination": "/index.html" },
+    { "source": "/vendingpreneurs/", "destination": "/index.html" },
+    { "source": "/vendingpreneurs/index.html", "destination": "/index.html" },
+    { "source": "/vendingpreneurs/login.html", "destination": "/login.html" },
+    { "source": "/vendingpreneurs/analytics.html", "destination": "/analytics.html" },
+    { "source": "/vendingpreneurs/bookings.html", "destination": "/bookings.html" },
+    { "source": "/vendingpreneurs/converted.html", "destination": "/converted.html" },
+    { "source": "/vendingpreneurs/courses.html", "destination": "/courses.html" },
+    { "source": "/vendingpreneurs/learners.html", "destination": "/learners.html" },
+    { "source": "/vendingpreneurs/revenue.html", "destination": "/revenue.html" },
+    { "source": "/vendingpreneurs/settings.html", "destination": "/settings.html" },
+    { "source": "/vendingpreneurs/warm-leads.html", "destination": "/warm-leads.html" },
+    { "source": "/vendingpreneurs/assets/:path*", "destination": "/assets/:path*" }
   ]
 }
-
