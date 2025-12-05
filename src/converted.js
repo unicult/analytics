@@ -19,6 +19,7 @@ let filteredCustomers = []
 let currentPage = 0
 let pageSize = 25
 let currentSort = 'spend'
+let totalConvertedCount = 0 // Store the actual total from the database
 
 // Helper: Format currency
 const formatCurrency = (amount) => {
@@ -57,6 +58,7 @@ async function loadConverted() {
   
   // Populate KPIs
   const totalConverted = backendData.converted_customers_count || 0
+  totalConvertedCount = totalConverted // Store for pagination display
   const totalRevenue = parseFloat(backendData.total_backend_revenue) || 0
   const frontendCount = backendData.frontend_customers_count || 0
   const conversionRate = frontendCount > 0 ? ((totalConverted / frontendCount) * 100).toFixed(1) : 0
@@ -262,15 +264,25 @@ function renderTable() {
 // Update pagination
 function updatePagination() {
   const total = filteredCustomers.length
+  const searchQuery = document.getElementById('search-input')?.value?.toLowerCase() || ''
+  // Use the actual database count when no search filter, otherwise show filtered count
+  const displayTotal = searchQuery ? total : Math.max(total, totalConvertedCount)
   const start = currentPage * pageSize + 1
   const end = Math.min((currentPage + 1) * pageSize, total)
   const totalPages = Math.ceil(total / pageSize)
 
   const infoEl = document.getElementById('pagination-info')
   if (infoEl) {
-    infoEl.textContent = total > 0 
-      ? `Showing ${start} to ${end} of ${total} customers`
-      : 'No customers to display'
+    if (total === 0) {
+      infoEl.textContent = 'No customers to display'
+    } else if (searchQuery) {
+      infoEl.textContent = `Showing ${start} to ${end} of ${total} customers (filtered)`
+    } else if (total < totalConvertedCount) {
+      // Show note when not all records are loaded
+      infoEl.textContent = `Showing ${start} to ${end} of ${total} loaded (${totalConvertedCount} total)`
+    } else {
+      infoEl.textContent = `Showing ${start} to ${end} of ${displayTotal} customers`
+    }
   }
 
   const controlsEl = document.getElementById('pagination-controls')
