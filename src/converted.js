@@ -58,6 +58,7 @@ async function loadConverted() {
   
   // Populate KPIs
   const totalConverted = backendData.converted_customers_count || 0
+  const totalPurchases = backendData.total_backend_sales || 0
   totalConvertedCount = totalConverted // Store for pagination display
   const totalRevenue = parseFloat(backendData.total_backend_revenue) || 0
   const frontendCount = backendData.frontend_customers_count || 0
@@ -68,6 +69,12 @@ async function loadConverted() {
   document.getElementById('kpi-revenue').textContent = formatCurrency(totalRevenue)
   document.getElementById('kpi-rate').textContent = `${conversionRate}%`
   document.getElementById('kpi-avg').textContent = formatCurrency(avgSpend)
+  
+  // Show total purchases if different from customer count
+  const purchasesEl = document.getElementById('kpi-purchases')
+  if (purchasesEl && totalPurchases > totalConverted) {
+    purchasesEl.textContent = `(${totalPurchases} purchases)`
+  }
 
   // Update badge
   const badge = document.getElementById('converted-count-badge')

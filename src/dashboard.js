@@ -120,7 +120,14 @@ async function loadDashboard() {
       document.getElementById('kpi-backend-revenue').innerText = formatCurrency(backendData.total_backend_revenue || 0)
     }
     if (document.getElementById('kpi-backend-sales')) {
-      document.getElementById('kpi-backend-sales').innerText = `${backendData.total_backend_sales || 0} sales`
+      const customers = backendData.converted_customers_count || 0
+      const sales = backendData.total_backend_sales || 0
+      // Show customers count, with purchases in parentheses if different
+      if (sales > customers) {
+        document.getElementById('kpi-backend-sales').innerText = `${customers} customers (${sales} purchases)`
+      } else {
+        document.getElementById('kpi-backend-sales').innerText = `${customers} customers`
+      }
     }
     if (document.getElementById('kpi-conversion-rate')) {
       const conversionRate = backendData.frontend_customers_count > 0 
