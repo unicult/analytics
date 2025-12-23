@@ -18,7 +18,7 @@ let allCustomers = []
 let filteredCustomers = []
 let currentPage = 0
 let pageSize = 25
-let currentSort = 'spend'
+let currentSort = 'recent'
 let totalConvertedCount = 0 // Store the actual total from the database
 
 // Helper: Format currency
