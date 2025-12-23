@@ -9,6 +9,7 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 let allBookings = []
 let currentPage = 0
 const bookingsPerPage = 20
+let currentSort = 'date' // Default to most recent
 
 // Main load function
 async function loadBookings() {
@@ -66,23 +67,18 @@ async function loadBookings() {
     })
   )
 
-  // Calculate intent scores and sort by score (desc), then by event count (desc)
+  // Calculate intent scores
   const bookingsWithScores = bookingsWithJourney.map(booking => ({
     ...booking,
     intentScore: calculateIntentScore(booking),
     eventCount: booking.recentEvents?.length || 0
   }))
 
-  // Sort: primary by intent score (desc), secondary by event count (desc)
-  bookingsWithScores.sort((a, b) => {
-    if (b.intentScore !== a.intentScore) {
-      return b.intentScore - a.intentScore
-    }
-    return b.eventCount - a.eventCount
-  })
-
   // Store globally for pagination
   allBookings = bookingsWithScores
+  
+  // Apply default sort (most recent first - already sorted from DB query)
+  sortBookings()
 
   // Update KPIs
   updateKPIs(allBookings)
@@ -96,6 +92,9 @@ async function loadBookings() {
 
   // Setup pagination controls
   setupPagination()
+  
+  // Setup sort dropdown
+  setupSort()
 
   console.log('Bookings page loaded!')
 }
@@ -843,6 +842,37 @@ function getAvatarColor(index) {
     { bg: 'bg-gradient-to-br from-pink-500/20 to-rose-500/20', border: 'border-pink-500/30', text: 'text-pink-300' },
   ]
   return colors[index % colors.length]
+}
+
+// Sort bookings based on current sort selection
+function sortBookings() {
+  if (currentSort === 'intent') {
+    // Sort by intent score (desc), then by event count (desc)
+    allBookings.sort((a, b) => {
+      if (b.intentScore !== a.intentScore) {
+        return b.intentScore - a.intentScore
+      }
+      return b.eventCount - a.eventCount
+    })
+  } else {
+    // Sort by date (most recent first)
+    allBookings.sort((a, b) => {
+      return new Date(b.occurred_at) - new Date(a.occurred_at)
+    })
+  }
+}
+
+// Setup sort dropdown
+function setupSort() {
+  const sortSelect = document.getElementById('sort-select')
+  if (!sortSelect) return
+  
+  sortSelect.addEventListener('change', (e) => {
+    currentSort = e.target.value
+    sortBookings()
+    currentPage = 0
+    renderCurrentPage()
+  })
 }
 
 // Setup search functionality
