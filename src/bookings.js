@@ -268,11 +268,16 @@ function renderBookingsTable(bookings) {
 
         <!-- Booked From -->
         <td class="px-5 py-4 align-middle w-56">
-          <div class="flex items-center gap-1.5 text-zinc-400 w-fit">
+          <div class="flex items-center gap-1.5 text-zinc-400 w-fit group/booked relative">
             <div class="p-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-500">
               ${getPageIcon(bookedFrom.path)}
             </div>
-            <span class="text-xs">${bookedFrom.display}</span>
+            <span class="text-xs cursor-help">${bookedFrom.display}</span>
+            ${bookedFrom.fullUrl ? `
+              <div class="absolute bottom-full left-0 mb-2 px-2 py-1.5 bg-zinc-900 border border-zinc-700 rounded text-[10px] text-zinc-300 opacity-0 invisible group-hover/booked:opacity-100 group-hover/booked:visible transition-all whitespace-nowrap max-w-[300px] truncate z-50 shadow-lg">
+                ${bookedFrom.fullUrl}
+              </div>
+            ` : ''}
           </div>
           <div class="text-[10px] text-zinc-600 mt-1 pl-1">
             ${formatDate(booking.occurred_at)}
@@ -348,7 +353,8 @@ function processEventsWithDuration(events) {
           label: 'Clicked Book Call',
           duration: 0,
           timestamp: event.occurred_at,
-          cta_pos: event.cta_pos
+          cta_pos: event.cta_pos,
+          page_url: event.page_url  // Save the URL where they clicked
         })
       }
     } else if (event.event_name === 'call_booked') {
@@ -492,26 +498,38 @@ function getIntentLevel(score) {
 function getBookedFrom(booking) {
   // Check recent events for the page they came from
   const events = booking.recentEvents || []
-  const lastPageView = events.find(e => e.event_name === 'page_view' || e.event_name === 'book_call_click')
   
-  if (lastPageView?.page_url) {
+  // First try to find a book_call_click event (has exact URL where they clicked)
+  const bookCallClick = events.find(e => e.type === 'book_call_click' && e.page_url)
+  // Fallback to last page view
+  const lastPageView = events.find(e => e.type === 'page_view' && e.page_url)
+  
+  const sourceEvent = bookCallClick || lastPageView
+  
+  if (sourceEvent?.page_url) {
     try {
-      const url = new URL(lastPageView.page_url)
+      const url = new URL(sourceEvent.page_url)
+      // Get a clean display path
+      let displayPath = url.pathname
+      if (displayPath.length > 30) {
+        displayPath = '...' + displayPath.slice(-27)
+      }
       return {
         path: url.pathname,
-        display: url.pathname.length > 25 ? url.pathname.slice(0, 25) + '...' : url.pathname
+        fullUrl: sourceEvent.page_url,
+        display: displayPath
       }
     } catch {
-      return { path: '/unknown', display: lastPageView.page_url }
+      return { path: '/unknown', fullUrl: sourceEvent.page_url, display: sourceEvent.page_url }
     }
   }
 
   // Fallback to booking source
   if (booking.page_url === 'hubspot_meetings') {
-    return { path: '/hubspot', display: 'HubSpot Direct' }
+    return { path: '/hubspot', fullUrl: null, display: 'HubSpot Direct' }
   }
 
-  return { path: '/direct', display: 'Direct Booking' }
+  return { path: '/direct', fullUrl: null, display: 'Direct Booking' }
 }
 
 // Get icon for page type
