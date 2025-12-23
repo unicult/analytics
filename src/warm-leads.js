@@ -633,7 +633,7 @@ function renderNoBookingTable(users) {
     return
   }
   
-  tbody.innerHTML = users.slice(0, 100).map(user => {
+  tbody.innerHTML = users.map(user => {
     const initials = getInitials(user.email)
     const purchaseDateStr = formatDate(user.earliestPurchase)
     const courseCount = user.courses.length
@@ -1068,7 +1068,7 @@ function setupExportWarmLeads() {
         ['']
       ]
       
-      noBookingUsers.slice(0, 200).forEach((user, index) => {
+      noBookingUsers.forEach((user, index) => {
         noBookingData.push([
           '',
           index + 1,
