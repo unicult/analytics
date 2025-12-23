@@ -526,7 +526,7 @@ function getBookedFrom(booking) {
 
   // Fallback to booking source
   if (booking.page_url === 'hubspot_meetings') {
-    return { path: '/hubspot', fullUrl: null, display: 'HubSpot Direct' }
+    return { path: '/hubspot', fullUrl: null, display: 'Direct Ad End / Course Popup' }
   }
 
   return { path: '/direct', fullUrl: null, display: 'Direct Booking' }
