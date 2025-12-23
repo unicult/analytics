@@ -10,6 +10,7 @@ let highActivityUsers = []
 let abandonedClicks = []
 let todayActiveUsers = []
 let boughtInactiveUsers = []
+let noBookingUsers = []
 let bookedEmails = new Set()
 
 // Frontend course keys
@@ -30,7 +31,7 @@ async function loadWarmLeads() {
   const todayStr = today.toISOString()
   
   // Load all data in parallel using pre-aggregated views (FAST!)
-  const [bookedResult, highActivityResult, abandonedResult, todayEventsResult, todayEntitlementsResult, backendMetricsResult] = await Promise.all([
+  const [bookedResult, highActivityResult, abandonedResult, todayEventsResult, todayEntitlementsResult, backendMetricsResult, allEntitlementsResult] = await Promise.all([
     supabase
       .from('analytics_events')
       .select('email')
@@ -59,7 +60,13 @@ async function loadWarmLeads() {
     supabase
       .from('backend_revenue_metrics')
       .select('top_converted_customers')
-      .single()
+      .single(),
+    // All entitlements for no-booking users
+    supabase
+      .from('entitlements')
+      .select('email, course_key, granted_at, is_active')
+      .eq('is_active', true)
+      .order('granted_at', { ascending: false })
   ])
   
   // Process booked emails
@@ -186,12 +193,58 @@ async function loadWarmLeads() {
     console.log(`Found ${boughtInactiveUsers.length} users who bought today but aren't active`)
   }
   
+  // Process users who bought a course but haven't booked a call
+  if (allEntitlementsResult.error) {
+    console.error('Error fetching all entitlements:', allEntitlementsResult.error)
+  } else if (allEntitlementsResult.data) {
+    // Group entitlements by email
+    const entitlementsByEmail = {}
+    allEntitlementsResult.data.forEach(ent => {
+      if (!ent.email) return
+      if (!entitlementsByEmail[ent.email]) {
+        entitlementsByEmail[ent.email] = {
+          email: ent.email,
+          courses: [],
+          latestPurchase: null,
+          earliestPurchase: null
+        }
+      }
+      entitlementsByEmail[ent.email].courses.push(ent.course_key)
+      const grantedDate = new Date(ent.granted_at)
+      if (!entitlementsByEmail[ent.email].latestPurchase || grantedDate > entitlementsByEmail[ent.email].latestPurchase) {
+        entitlementsByEmail[ent.email].latestPurchase = grantedDate
+      }
+      if (!entitlementsByEmail[ent.email].earliestPurchase || grantedDate < entitlementsByEmail[ent.email].earliestPurchase) {
+        entitlementsByEmail[ent.email].earliestPurchase = grantedDate
+      }
+    })
+    
+    // Filter to only those who haven't booked a call
+    noBookingUsers = Object.values(entitlementsByEmail)
+      .filter(user => !bookedEmails.has(user.email))
+      .map(user => {
+        const daysSincePurchase = Math.floor((new Date() - user.earliestPurchase) / (1000 * 60 * 60 * 24))
+        // Get activity level from high activity users if available
+        const activityData = highActivityUsers.find(h => h.email === user.email)
+        return {
+          ...user,
+          courses: [...new Set(user.courses)], // Unique courses
+          daysSincePurchase,
+          activityLevel: activityData ? activityData.viewCount : 0
+        }
+      })
+      .sort((a, b) => a.daysSincePurchase - b.daysSincePurchase) // Most recent first
+    
+    console.log(`Found ${noBookingUsers.length} users who bought courses but haven't booked a call`)
+  }
+  
   // Render everything
   updateKPIs()
   renderHighActivityTable(highActivityUsers)
   renderAbandonedTable(abandonedClicks)
   renderTodayActiveTable(todayActiveUsers)
   renderBoughtInactiveTable(boughtInactiveUsers)
+  renderNoBookingTable(noBookingUsers)
   
   setupSearch()
   
@@ -554,6 +607,101 @@ function renderBoughtInactiveTable(users) {
   }).join('')
 }
 
+// Render no booking table (bought course but haven't booked a call)
+function renderNoBookingTable(users) {
+  const tbody = document.getElementById('no-booking-tbody')
+  const countEl = document.getElementById('no-booking-count')
+  if (!tbody) return
+  
+  if (countEl) {
+    countEl.textContent = `${users.length} users`
+  }
+  
+  if (users.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="px-6 py-16 text-center text-zinc-500">
+          <div class="flex flex-col items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+            <span>All course owners have booked calls! 🎉</span>
+          </div>
+        </td>
+      </tr>
+    `
+    return
+  }
+  
+  tbody.innerHTML = users.slice(0, 100).map(user => {
+    const initials = getInitials(user.email)
+    const purchaseDateStr = formatDate(user.earliestPurchase)
+    const courseCount = user.courses.length
+    const displayCourses = user.courses.slice(0, 2).join(', ')
+    const moreCourses = courseCount > 2 ? ` +${courseCount - 2} more` : ''
+    
+    // Color code days since purchase
+    let daysBadgeClass = 'bg-zinc-800 text-zinc-400 border-zinc-700'
+    if (user.daysSincePurchase <= 7) {
+      daysBadgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+    } else if (user.daysSincePurchase <= 30) {
+      daysBadgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+    } else if (user.daysSincePurchase <= 90) {
+      daysBadgeClass = 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+    } else {
+      daysBadgeClass = 'bg-red-500/10 text-red-400 border-red-500/20'
+    }
+    
+    // Activity level badge
+    let activityBadge = ''
+    if (user.activityLevel > 50) {
+      activityBadge = `<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full">High</span>`
+    } else if (user.activityLevel > 10) {
+      activityBadge = `<span class="px-2 py-0.5 text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full">Medium</span>`
+    } else if (user.activityLevel > 0) {
+      activityBadge = `<span class="px-2 py-0.5 text-[10px] font-bold bg-zinc-700/50 text-zinc-400 border border-zinc-600/30 rounded-full">Low</span>`
+    } else {
+      activityBadge = `<span class="px-2 py-0.5 text-[10px] font-bold bg-zinc-800/50 text-zinc-500 border border-zinc-700/30 rounded-full">None</span>`
+    }
+    
+    return `
+      <tr class="hover:bg-surfaceHighlight/10 transition-colors group border-b border-border/40 last:border-0">
+        <td class="px-6 py-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-zinc-300 shadow-inner">
+              ${initials}
+            </div>
+            <div class="flex flex-col">
+              <span class="text-zinc-200 text-sm font-medium group-hover:text-white transition-colors">${user.email.split('@')[0]}</span>
+              <span class="text-[11px] text-zinc-500 font-mono">${user.email}</span>
+            </div>
+          </div>
+        </td>
+        <td class="px-6 py-4">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded bg-rose-500/10 flex items-center justify-center text-rose-400 border border-rose-500/20">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg>
+            </div>
+            <span class="text-zinc-300 text-sm">${displayCourses}</span>
+            ${moreCourses ? `<span class="text-[10px] text-zinc-500 bg-zinc-800/50 px-1.5 py-0.5 rounded">${moreCourses}</span>` : ''}
+          </div>
+        </td>
+        <td class="px-6 py-4">
+          <div class="text-zinc-400 text-sm">${purchaseDateStr}</div>
+        </td>
+        <td class="px-6 py-4 text-center">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border ${daysBadgeClass}">
+            ${user.daysSincePurchase}d
+          </div>
+        </td>
+        <td class="px-6 py-4 text-center">
+          ${activityBadge}
+        </td>
+      </tr>
+    `
+  }).join('')
+}
+
 // Setup search functionality
 function setupSearch() {
   const highActivitySearch = document.getElementById('search-high-activity')
@@ -601,6 +749,17 @@ function setupSearch() {
     })
   }
   
+  const noBookingSearch = document.getElementById('search-no-booking')
+  if (noBookingSearch) {
+    noBookingSearch.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase()
+      const filtered = noBookingUsers.filter(u => 
+        u.email.toLowerCase().includes(query) ||
+        u.courses.some(c => c.toLowerCase().includes(query))
+      )
+      renderNoBookingTable(filtered)
+    })
+  }
 }
 
 // Helper: Get initials from email
@@ -744,6 +903,7 @@ function setupExportWarmLeads() {
       ['', 'Abandoned Booking Clicks', abandonedClicks.length],
       ['', 'Today\'s Active Users', todayActiveUsers.length],
       ['', 'Bought Today But Inactive', boughtInactiveUsers.length],
+      ['', 'Bought Course, No Call Booked', noBookingUsers.length],
       [''],
       ['', 'Click Conversion Rate', `${bookedEmails.size > 0 && abandonedClicks.length > 0 ? ((bookedEmails.size / (abandonedClicks.length + bookedEmails.size)) * 100).toFixed(1) : 0}%`],
       ['', 'Users Who Booked Calls', bookedEmails.size],
@@ -894,6 +1054,41 @@ function setupExportWarmLeads() {
       const wsBoughtInactive = XLSX.utils.aoa_to_sheet(boughtInactiveData)
       wsBoughtInactive['!cols'] = [{ wch: 5 }, { wch: 5 }, { wch: 35 }, { wch: 30 }, { wch: 14 }, { wch: 12 }]
       XLSX.utils.book_append_sheet(wb, wsBoughtInactive, 'Bought Not Active')
+    }
+    
+    // --- Sheet 6: Bought Course But No Call Booked ---
+    if (noBookingUsers.length > 0) {
+      const noBookingData = [
+        [''],
+        ['', 'BOUGHT COURSE BUT NO CALL BOOKED'],
+        ['', 'Course owners who haven\'t booked a strategy call yet'],
+        [''],
+        [''],
+        ['', '#', 'EMAIL', 'COURSES OWNED', 'PURCHASE DATE', 'DAYS SINCE', 'ACTIVITY LEVEL'],
+        ['']
+      ]
+      
+      noBookingUsers.slice(0, 200).forEach((user, index) => {
+        noBookingData.push([
+          '',
+          index + 1,
+          user.email,
+          user.courses.join(', '),
+          formatDate(user.earliestPurchase),
+          user.daysSincePurchase,
+          user.activityLevel > 50 ? 'High' : user.activityLevel > 10 ? 'Medium' : user.activityLevel > 0 ? 'Low' : 'None'
+        ])
+      })
+      
+      noBookingData.push([''])
+      noBookingData.push(['', '─'.repeat(70)])
+      noBookingData.push(['', 'TOTAL USERS WITHOUT BOOKINGS', noBookingUsers.length])
+      noBookingData.push([''])
+      noBookingData.push(['', 'ACTION: Reach out to encourage booking a strategy call'])
+      
+      const wsNoBooking = XLSX.utils.aoa_to_sheet(noBookingData)
+      wsNoBooking['!cols'] = [{ wch: 5 }, { wch: 5 }, { wch: 35 }, { wch: 40 }, { wch: 14 }, { wch: 12 }, { wch: 14 }]
+      XLSX.utils.book_append_sheet(wb, wsNoBooking, 'No Call Booked')
     }
     
     // Download the file
